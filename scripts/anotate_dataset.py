@@ -90,8 +90,8 @@ def main():
             
             # load image
             img = cv2.imread(img_dir)
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             assert(img is not None)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             # Fit model
             """res is list of dictionary [dict]. Len of res is the number of images that you fit into
 
@@ -163,7 +163,9 @@ def ParseArgs():
         help="Data directory")
     parser.add_argument("-wdir", "--weights_dir", type=str, default="./mask_rcnn_coco.h5", help="Path to pretrained weights of Mask RCNN")
     parser.add_argument("-mdir", "--model_dir", type=str, default="./", help="Directory to write logs and save files")
-    parser.add_argument("-cf_thr", "--conf_threshold", type=float, default=0.8)
+    parser.add_argument("-cf_thr", "--conf_threshold", type=float, default=0.8, help="Confidence level threshold for bounding boxes")
+    parser.add_argument("-cf_thr", "--conf_threshold", type=float, default=0.8, help="Confidence level threshold for bounding boxes")
+
     return parser.parse_args()
 
 def __name__ == "__main__":
