@@ -57,101 +57,116 @@ def plot_bounding_box_with_image(img, boxes, class_ids, scores):
     
     plt.show()
 
-pretrained_weights_dir = "./mask_rcnn_coco.h5"
-data_dir = "/Users/haophung/OneDrive - VNU-HCMUS/car_dataset"
-conf_threshold = 0.8 # Confidence threshold
-area_threshold = 0.4 # Area threshold for small objq
-anot_data = {}
+def main():
+    pretrained_weights_dir = "./mask_rcnn_coco.h5"
+    data_dir = "/Users/haophung/OneDrive - VNU-HCMUS/car_dataset"
+    conf_threshold = 0.8 # Confidence threshold
+    area_threshold = 0.4 # Area threshold for small objq
+    anot_data = {}
 
-# Define model to inference, model_dir is directory to write logs
-rcnn = MaskRCNN(mode='inference', model_dir='./', config=InferenceConfig())
+    # Define model to inference, model_dir is directory to write logs
+    rcnn = MaskRCNN(mode='inference', model_dir='./', config=InferenceConfig())
 
-# Load pretrained weights on coco
-rcnn.load_weights(pretrained_weights_dir, by_name=True)
+    # Load pretrained weights on coco
+    rcnn.load_weights(pretrained_weights_dir, by_name=True)
 
 
-image_paths = {}
-for directory in os.listdir(data_dir):
-    # Pass if this is a file
-    if "." in directory:
-        continue
-    image_paths[directory] = os.listdir(os.path.join(data_dir, directory))
-# print(json_tricks.dumps(image_paths, indent=4))
-
-car_ids = [class_names.index('car'), class_names.index('truck')]
-
-for car_model, imgnames in image_paths.items():
-    for imgname in imgnames:
-        if imgname.startswith(".") or imgname.startswith("Icon"):
+    image_paths = {}
+    for directory in os.listdir(data_dir):
+        # Pass if this is a file
+        if "." in directory:
             continue
-        # Get img_dir
-        img_dir = os.path.join(data_dir, car_model, imgname)
-        
-        # load image
-        img = cv2.imread(img_dir)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        assert(img is not None)
-        # Fit model
-        """res is list of dictionary [dict]. Len of res is the number of images that you fit into
+        image_paths[directory] = os.listdir(os.path.join(data_dir, directory))
+    # print(json_tricks.dumps(image_paths, indent=4))
 
-        Where dict contain these keys:
-            "rois": the bounding boxes or ROI for detected objects (contain lower left and higher right points)
-            "masks": The masks for detected objects
-            "class_ids": The class index
-            "scores": The confidence level of predicted class
-        """
+    car_ids = [class_names.index('car'), class_names.index('truck')]
 
-        res_list = rcnn.detect([img], verbose=0)
-
-        res = res_list[0]
-
-        # Get boxes for image
-        boxes = res['rois']
-        class_ids = res['class_ids']
-        scores = res['scores']
-
-        anot_key = os.path.join(car_model, imgname)
-        anot_data[anot_key] = {"boxes":[], "scores":[], "scaled_area":[]}
-
-        fig = plt.figure()
-        ax = fig.gca()
-        ax.imshow(img)
-
-        img_height, img_width = img.shape[:2]
-
-        for i, box in enumerate(boxes):
-            if class_ids[i] not in car_ids or scores[i] < conf_threshold:
+    for car_model, imgnames in image_paths.items():
+        for imgname in imgnames:
+            if imgname.startswith(".") or imgname.startswith("Icon"):
                 continue
-            # lower left
-            y1, x1, y2, x2 = box
-            # Compute width and height
-            width, height = x2 - x1, y2 - y1
-
-            # Filter out small bounding boxes
-            scaled_area = (width * height) / (img_width * img_height)
-            if scaled_area < area_threshold:
-                continue
+            # Get img_dir
+            img_dir = os.path.join(data_dir, car_model, imgname)
             
-            # Create rectangle
-            rect = Rectangle((x1, y1), width, height, fill=False, color='red')
-            # Draw rect
-            ax.add_patch(rect)
+            # load image
+            img = cv2.imread(img_dir)
+            assert(img is not None)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            # Fit model
+            """res is list of dictionary [dict]. Len of res is the number of images that you fit into
 
-            # Write confidence
-            ax.text(x1, y1, "{:.2f}".format(scores[i]), fontsize=12, color='red')
+            Where dict contain these keys:
+                "rois": the bounding boxes or ROI for detected objects (contain lower left and higher right points)
+                "masks": The masks for detected objects
+                "class_ids": The class index
+                "scores": The confidence level of predicted class
+            """
 
-            # Save "scaled_area", "boxes" and "scores"
-            anot_data[anot_key]["scaled_area"].append(scaled_area)
-            anot_data[anot_key]["boxes"].append(box)
-            anot_data[anot_key]["scores"].append(scores[i])
-            
-        # # Plot image with bounding boxes
-        # plot_bounding_box_with_image(img, boxes, class_ids, scores)
+            res_list = rcnn.detect([img], verbose=0)
+
+            res = res_list[0]
+
+            # Get boxes for image
+            boxes = res['rois']
+            class_ids = res['class_ids']
+            scores = res['scores']
+
+            anot_key = os.path.join(car_model, imgname)
+            anot_data[anot_key] = {"boxes":[], "scores":[], "scaled_area":[]}
+
+            fig = plt.figure()
+            ax = fig.gca()
+            ax.imshow(img)
+
+            img_height, img_width = img.shape[:2]
+
+            for i, box in enumerate(boxes):
+                if class_ids[i] not in car_ids or scores[i] < conf_threshold:
+                    continue
+                # lower left
+                y1, x1, y2, x2 = box
+                # Compute width and height
+                width, height = x2 - x1, y2 - y1
+
+                # Filter out small bounding boxes
+                scaled_area = (width * height) / (img_width * img_height)
+                if scaled_area < area_threshold:
+                    continue
+                
+                # Create rectangle
+                rect = Rectangle((x1, y1), width, height, fill=False, color='red')
+                # Draw rect
+                ax.add_patch(rect)
+
+                # Write confidence
+                ax.text(x1, y1, "{:.2f}".format(scores[i]), fontsize=12, color='red')
+
+                # Save "scaled_area", "boxes" and "scores"
+                anot_data[anot_key]["scaled_area"].append(scaled_area)
+                anot_data[anot_key]["boxes"].append(box)
+                anot_data[anot_key]["scores"].append(scores[i])
+                
+            # # Plot image with bounding boxes
+            # plot_bounding_box_with_image(img, boxes, class_ids, scores)
+            break
         break
-    break
 
-plt.show()
+    plt.show()
 
-# Save anot_data
-with open(os.path.join(data_dir, "anotations.json"), "w") as json_file:
-    json_tricks.dump(anot_data, json_file, indent=4)
+    # Save anot_data
+    with open(os.path.join(data_dir, "anotations.json"), "w") as json_file:
+        json_tricks.dump(anot_data, json_file, indent=4)
+
+def ParseArgs():
+    parser = argparse.ArgumentParser(description="Anotate dataset using Mask RCNN")
+    parser.add_argument("-ddir", "--data_dir", type=str, required=True,\
+        help="Data directory")
+    parser.add_argument("-wdir", "--weights_dir", type=str, default="./mask_rcnn_coco.h5", help="Path to pretrained weights of Mask RCNN")
+    parser.add_argument("-mdir", "--model_dir", type=str, default="./", help="Directory to write logs and save files")
+    parser.add_argument("-cf_thr", "--conf_threshold", type=float, default=0.8, help="Confidence level threshold for bounding boxes")
+    parser.add_argument("-cf_thr", "--conf_threshold", type=float, default=0.8, help="Confidence level threshold for bounding boxes")
+
+    return parser.parse_args()
+
+def __name__ == "__main__":
+    main(ParseArgs())
