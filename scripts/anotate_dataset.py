@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
 import json_tricks
 import os
+import argparse
 
 # define 81 classes that the coco model knowns about
 class_names = ['BG', 'person', 'bicycle', 'car', 'motorcycle', 'airplane',
@@ -57,15 +58,16 @@ def plot_bounding_box_with_image(img, boxes, class_ids, scores):
     
     plt.show()
 
-def main():
-    pretrained_weights_dir = "./mask_rcnn_coco.h5"
-    data_dir = "/Users/haophung/OneDrive - VNU-HCMUS/car_dataset"
-    conf_threshold = 0.8 # Confidence threshold
-    area_threshold = 0.4 # Area threshold for small objq
+def main(args):
+    pretrained_weights_dir = args.weights_dir
+    data_dir = args.data_dir
+    conf_threshold = args.conf_threshold # Confidence threshold
+    area_threshold = args.area_threshold # Area threshold for small objq
+
     anot_data = {}
 
     # Define model to inference, model_dir is directory to write logs
-    rcnn = MaskRCNN(mode='inference', model_dir='./', config=InferenceConfig())
+    rcnn = MaskRCNN(mode='inference', model_dir=args.model_dir, config=InferenceConfig())
 
     # Load pretrained weights on coco
     rcnn.load_weights(pretrained_weights_dir, by_name=True)
@@ -82,6 +84,7 @@ def main():
     car_ids = [class_names.index('car'), class_names.index('truck')]
 
     for car_model, imgnames in image_paths.items():
+        print(car_model)
         for imgname in imgnames:
             if imgname.startswith(".") or imgname.startswith("Icon"):
                 continue
@@ -114,9 +117,9 @@ def main():
             anot_key = os.path.join(car_model, imgname)
             anot_data[anot_key] = {"boxes":[], "scores":[], "scaled_area":[]}
 
-            fig = plt.figure()
-            ax = fig.gca()
-            ax.imshow(img)
+            # fig = plt.figure()
+            # ax = fig.gca()
+            # ax.imshow(img)
 
             img_height, img_width = img.shape[:2]
 
@@ -135,11 +138,11 @@ def main():
                 
                 # Create rectangle
                 rect = Rectangle((x1, y1), width, height, fill=False, color='red')
-                # Draw rect
-                ax.add_patch(rect)
+                # # Draw rect
+                # ax.add_patch(rect)
 
-                # Write confidence
-                ax.text(x1, y1, "{:.2f}".format(scores[i]), fontsize=12, color='red')
+                # # Write confidence
+                # ax.text(x1, y1, "{:.2f}".format(scores[i]), fontsize=12, color='red')
 
                 # Save "scaled_area", "boxes" and "scores"
                 anot_data[anot_key]["scaled_area"].append(scaled_area)
@@ -148,10 +151,8 @@ def main():
                 
             # # Plot image with bounding boxes
             # plot_bounding_box_with_image(img, boxes, class_ids, scores)
-            break
-        break
 
-    plt.show()
+    # plt.show()
 
     # Save anot_data
     with open(os.path.join(data_dir, "anotations.json"), "w") as json_file:
@@ -164,9 +165,9 @@ def ParseArgs():
     parser.add_argument("-wdir", "--weights_dir", type=str, default="./mask_rcnn_coco.h5", help="Path to pretrained weights of Mask RCNN")
     parser.add_argument("-mdir", "--model_dir", type=str, default="./", help="Directory to write logs and save files")
     parser.add_argument("-cf_thr", "--conf_threshold", type=float, default=0.8, help="Confidence level threshold for bounding boxes")
-    parser.add_argument("-cf_thr", "--conf_threshold", type=float, default=0.8, help="Confidence level threshold for bounding boxes")
+    parser.add_argument("-a_thr", "--area_threshold", type=float, default=0.2, help="Area threshold for bounding boxes")
 
     return parser.parse_args()
 
-def __name__ == "__main__":
+if __name__ == "__main__":
     main(ParseArgs())

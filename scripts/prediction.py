@@ -62,15 +62,6 @@ def plot_bounding_box_with_image(img, boxes, class_ids, scores):
     
     plt.show()
 
-def ParseArgs():
-    parser = argparse.ArgumentParser(description="Image prediction using Mask RCNN")
-    parser.add_argument("-idir", "--img_dir", type=str, required=True,\
-        help="Path to input image")
-    parser.add_argument("-wdir", "--weights_dir", type=str, default="./mask_rcnn_coco.h5", help="Path to pretrained weights of Mask RCNN")
-    parser.add_argument("-mdir", "--model_dir", type=str, default="./", help="Directory to write logs and save files")
-    
-    return parser.parse_args()
-
 def main(args):
     pretrained_weights_dir = args.weights_dir
     img_dir = args.img_dir # "/Users/haophung/Documents/Mask_RCNN/images/mercedes_benz.jpg" # "/Users/haophung/Documents/Mask_RCNN/images/12283150_12d37e6389_z.jpg"
@@ -111,6 +102,15 @@ def main(args):
 
     # plt.figure()
     display_instances(img, res['rois'], res['masks'], res['class_ids'], class_names, res['scores'])
+
+def ParseArgs():
+    parser = argparse.ArgumentParser(description="Image prediction using Mask RCNN")
+    parser.add_argument("-idir", "--img_dir", type=str, required=True,\
+        help="Path to input image")
+    parser.add_argument("-wdir", "--weights_dir", type=str, default="./mask_rcnn_coco.h5", help="Path to pretrained weights of Mask RCNN")
+    parser.add_argument("-mdir", "--model_dir", type=str, default="./", help="Directory to write logs and save files")
+    
+    return parser.parse_args()
 
 if __name__ == "__main__":
     main(ParseArgs())
